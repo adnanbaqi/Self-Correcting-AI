@@ -244,7 +244,7 @@ class InferencePipeline:
         )
         corrector_sys = self.corrector._get_system_prompt(domain)
 
-        async for chunk, _ in self._async_generate_stream(corrector_prompt, corrector_sys, 0.3):
+        async for chunk, _ in self._async_generate_stream(corrector_prompt, corrector_sys, 0.3, _GENERATOR_MAX_TOKENS[domain]):  # fix: added missing max_new_tokens
             corrector_buffer.append(chunk)
             yield {"event": "token", "stage": "correcting", "token": chunk}
 
