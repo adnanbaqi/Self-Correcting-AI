@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Brain, User } from "lucide-react";
+import { Send, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import HealthStatus from "@/components/HealthStatus";
@@ -81,7 +81,7 @@ const Index = () => {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Brain className="h-5 w-5 text-primary" />
+              <User className="h-5 w-5 text-primary" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-foreground">Self Correcting Neural System</h1>
@@ -103,7 +103,7 @@ const Index = () => {
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
               <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                <Brain className="h-8 w-8 text-primary" />
+                <User className="h-8 w-8 text-primary" />
               </div>
               <h2 className="text-xl font-bold text-foreground mb-2">Ask anything</h2>
               <p className="text-sm text-muted-foreground mb-6 max-w-md">
@@ -131,7 +131,7 @@ const Index = () => {
                 // Assistant Message UI (Mounts the Pipeline Stream)
                 <div className="flex gap-4 w-full justify-start mr-auto max-w-full">
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-1">
-                    <Brain className="h-4 w-4 text-primary" />
+                    <User className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <PipelineStages

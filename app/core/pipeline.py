@@ -19,11 +19,35 @@ logger = structlog.get_logger()
 settings = get_settings()
 
 GENERATOR_PROMPTS = {
-    TaskDomain.MATH:        "You are a precise mathematician. Solve the problem step by step, showing all working.",
-    TaskDomain.CODE:        "You are an expert software engineer. Write correct, clean, well-commented code.",
-    TaskDomain.COMMONSENSE: "You are a thoughtful reasoner. Answer with clear, logical reasoning.",
-    TaskDomain.QA:          "You are a knowledgeable assistant. Answer accurately and completely.",
-    TaskDomain.GENERAL:     "You are a helpful and accurate assistant. Answer thoroughly.",
+    TaskDomain.MATH: (
+        "You are a math solver. Answer in 3-5 lines maximum. "
+        "Show only the key steps and the final numeric answer. "
+        "Do not explain what logarithms are. Do not write more than 5 lines."
+    ),
+    TaskDomain.CODE: (
+        "You are a code assistant. Write only the requested code. "
+        "No explanations unless asked. Stop after the closing brace."
+    ),
+    TaskDomain.COMMONSENSE: (
+        "You are a reasoning assistant. Give a direct answer in 2-3 sentences. "
+        "Do not ramble. Stop after your conclusion."
+    ),
+    TaskDomain.QA: (
+        "You are a factual assistant. Answer directly in 1-3 sentences. "
+        "State only confirmed facts. Do not speculate."
+    ),
+    TaskDomain.GENERAL: (
+        "You are a helpful assistant. Answer directly and concisely. "
+        "Stop after you have answered the question."
+    ),
+}
+
+_GENERATOR_MAX_TOKENS = {
+    TaskDomain.MATH:        150,
+    TaskDomain.CODE:        400,
+    TaskDomain.COMMONSENSE: 120,
+    TaskDomain.QA:          120,
+    TaskDomain.GENERAL:     150,
 }
 
 # ── Keyword-based fast router ────────────────────────────────────────────────
@@ -119,7 +143,7 @@ class InferencePipeline:
         return TaskDomain.GENERAL
 
     async def _async_generate_stream(
-        self, prompt: str, system_instruction: str, temperature: float
+        self, prompt: str, system_instruction: str, temperature: float, max_new_tokens: int
     ) -> AsyncGenerator[tuple[str, float], None]:
         """Bridges synchronous PyTorch generation to an async generator via thread-safe queue."""
         queue = asyncio.Queue()
@@ -128,7 +152,7 @@ class InferencePipeline:
         def _producer():
             try:
                 for chunk, logprob in generate_streaming_with_probs(
-                    prompt=prompt, system_instruction=system_instruction, temperature=temperature
+                    prompt=prompt, system_instruction=system_instruction, temperature=temperature, max_new_tokens=max_new_tokens,
                 ):
                     loop.call_soon_threadsafe(queue.put_nowait, (chunk, logprob))
                 loop.call_soon_threadsafe(queue.put_nowait, (None, None))
@@ -163,7 +187,7 @@ class InferencePipeline:
         output_buffer = []
         sys_prompt = GENERATOR_PROMPTS[domain]
 
-        async for chunk, logprob in self._async_generate_stream(request.prompt, sys_prompt, 0.5):
+        async for chunk, logprob in self._async_generate_stream(request.prompt, sys_prompt, 0.5, _GENERATOR_MAX_TOKENS[domain]):
             output_buffer.append(chunk)
             yield {"event": "token", "stage": "generating", "token": chunk, "logprob": logprob}
 
@@ -201,7 +225,7 @@ class InferencePipeline:
         )
         explainer_sys = self.explainer._get_system_prompt(domain)
 
-        async for chunk, _ in self._async_generate_stream(explainer_prompt, explainer_sys, 0.2):
+        async for chunk, _ in self._async_generate_stream(explainer_prompt, explainer_sys, 0.2, _GENERATOR_MAX_TOKENS[domain]):
             rationale_buffer.append(chunk)
             yield {"event": "token", "stage": "explaining", "token": chunk}
 

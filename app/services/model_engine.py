@@ -17,11 +17,10 @@ _device = None
 _lock = Lock()
 
 _STOP_BOUNDARIES = [
-    "Instruct:",
-    "Output:",
-    "\nUser:",
-    "\nHuman:",
-    "\nAssistant:",
+    "<|end|>",
+    "<|user|>",
+    "<|system|>",
+    "<|assistant|>",
     "###",
 ]
 
@@ -42,10 +41,15 @@ def _is_looping(buffer: str) -> bool:
 
 def _build_prompt(prompt: str, system_instruction: str = "") -> str:
     if system_instruction.strip():
-        instruct_block = f"{system_instruction.strip()}\n{prompt.strip()}"
-    else:
-        instruct_block = prompt.strip()
-    return f"Instruct: {instruct_block}\nOutput:"
+        return (
+            f"<|system|>\n{system_instruction.strip()}<|end|>\n"
+            f"<|user|>\n{prompt.strip()}<|end|>\n"
+            f"<|assistant|>\n"
+        )
+    return (
+        f"<|user|>\n{prompt.strip()}<|end|>\n"
+        f"<|assistant|>\n"
+    )
 
 
 def _trim_response(response: str) -> str:

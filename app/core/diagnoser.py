@@ -12,13 +12,14 @@ settings = get_settings()
 _DIAGNOSER_MAX_TOKENS = 120
 
 DIAGNOSER_PROMPTS = {
-    TaskDomain.MATH: """You are a strict mathematical verifier. Assume the response may contain errors.
-Independently verify the answer by working through the problem yourself.
-Check: arithmetic correctness, unit conversions, formula usage, and final answer.
-Be skeptical — do not just agree with the response.
-Reply with ONLY this JSON and nothing else:
-{"confidence_score": <float 0.0-1.0>, "is_correct": <true|false>, "reasoning": "<one sentence stating what you verified>"}
-Set confidence_score below 0.85 and is_correct to false if you find ANY error.""",
+    TaskDomain.MATH: """You are a strict mathematical verifier. 
+First check: is the response coherent and does it actually compute a number? 
+If the response is rambling, does not reach a numeric answer, or contains nonsense, 
+set confidence_score to 0.0 and is_correct to false immediately.
+Only if the response is coherent: verify the arithmetic.
+"Extract the final numeric answer. If none exists → is_correct = false"
+Reply with ONLY this JSON:
+{"confidence_score": <float 0.0-1.0>, "is_correct": <true|false>, "reasoning": "<one sentence>"}""",
 
     TaskDomain.CODE: """You are a strict code reviewer. Assume the code may contain bugs.
 Trace through the logic manually. Check: correctness for edge cases (empty list, duplicates,
